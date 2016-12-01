@@ -12,6 +12,9 @@
     <OutputPath>.</OutputPath>
     <Name>jagent</Name>
     <RootNamespace>jagent</RootNamespace>
+    <LaunchProvider>Standard Python launcher</LaunchProvider>
+    <CommandLineArguments>"C:\Users\Alexander\Documents\Visual Studio 2015\Projects\e3d\bin\Release\x64\exe\e3d.exe"</CommandLineArguments>
+    <EnableNativeCodeDebugging>False</EnableNativeCodeDebugging>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
     <DebugSymbols>true</DebugSymbols>
