@@ -33,6 +33,7 @@ class Process:
   def stop(self):
     self.__process.kill()
 
+
 class Daemon:
   __process = None
   __worker1 = None
@@ -42,8 +43,8 @@ class Daemon:
     self.__process = Process( cmd )
 
   def spawn( self ):
-    self.__worker1 = threading.Thread( target = lambda: self.forever(self.__process.stderr_lines(), print) )
-    self.__worker2 = threading.Thread( target = lambda: self.forever(self.__process.stdout_lines(), print) )
+    self.__worker1 = threading.Thread( target = lambda: self.forever(self.__process.stderr_lines(), self.on_stderr_line_read) )
+    self.__worker2 = threading.Thread( target = lambda: self.forever(self.__process.stdout_lines(), self.on_stdout_line_read) )
     
     self.__worker1.start()
     self.__worker2.start()
@@ -56,10 +57,11 @@ class Daemon:
       except:
         print( "something bad was happen" )
 
+  def on_stderr_line_read( self, line ):
+    print( "stderr: {}".format(line) )
+
+  def on_stdout_line_read( self, line ):
+    print( "stdout: {}".format(line) )
+
 daemon = Daemon( cmd )
 daemon.spawn()
-
-#process = Process( cmd )
-
-#for line in process.read_stderr():
-#  print( line )
