@@ -35,9 +35,10 @@ class Process:
 
 
 class Daemon:
-  __process = None
-  __worker1 = None
-  __worker2 = None
+  __is_alive = False
+  __process  = None
+  __worker1  = None
+  __worker2  = None
   
   def __init__( self, cmd:str ):
     self.__process = Process( cmd )
@@ -45,20 +46,29 @@ class Daemon:
   def spawn( self ):
     self.__worker1 = threading.Thread( target = lambda: self.forever(self.__process.stderr_lines(), self.on_stderr_line_read) )
     self.__worker2 = threading.Thread( target = lambda: self.forever(self.__process.stdout_lines(), self.on_stdout_line_read) )
-    
+    self.__is_alive = True
     self.__worker1.start()
     self.__worker2.start()
 
-  def forever( self, range, callable,  ):
-    while True:
+  def kill( self ):
+    self.__is_alive = False
+    self.__process.stop()
+
+  def forever( self, range, callable ):
+    while self.__is_alive:
       try:
         for e in range:
+          if not self.__is_alive:
+            break
           callable( e )
       except:
         print( "something bad was happen" )
 
   def on_stderr_line_read( self, line ):
     print( "stderr: {}".format(line) )
+    if '7' in line:
+      print( "KILLING..." )
+      self.kill()
 
   def on_stdout_line_read( self, line ):
     print( "stdout: {}".format(line) )
