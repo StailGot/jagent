@@ -10,15 +10,11 @@ def get_path():
     return " ".join(sys.argv[1:]);
   return ""
 
-cmd = get_path()
-
-
 def any_of_words_in_line(words:list, line:str):
   for word in words:
-    if word in line:
-      return True
-  return False
-
+    if str(line).find(word) > -1:
+      return (word, True)
+  return ("", False)
 
 class Process:
   __process = None
@@ -49,7 +45,7 @@ class Daemon:
   __process   = None
   __worker1   = None
   __worker2   = None
-  __cmd       = cmd
+  __cmd       = ""
   __bad_words = []
 
   __respawn_lock = threading.Lock()
@@ -57,12 +53,12 @@ class Daemon:
 
   
   def __init__( self, cmd:str, bad_words:list ):
-    self.__process   = Process( cmd )
     self.__cmd       = cmd
     self.__bad_words = bad_words
     self.spawn()
 
   def spawn( self ):
+    self.__process = Process( cmd )
     self.__worker1 = threading.Thread( target = lambda: self.forever(self.__process.stderr_lines(), self.on_stderr_line_read) )
     self.__worker2 = threading.Thread( target = lambda: self.forever(self.__process.stdout_lines(), self.on_stdout_line_read) )
     self.__is_alive = True
@@ -72,16 +68,6 @@ class Daemon:
   def kill( self ):
     self.__is_alive = False
     self.__process.stop()
-    #self.kill_then()
-
-
-  #def kill_then( self ):
-  #  try:
-  #    self.__worker1._stop()
-  #    self.__worker2._stop()
-  #    os.kill( self.__worker2.ident )
-  #  except:
-  #    print( "kill error: {}".format(sys.exc_info()[0]) )
 
   def forever( self, range, callable ):
     while self.__is_alive:
@@ -93,6 +79,7 @@ class Daemon:
             self.__respawn_lock.acquire()
             if not self.__bool:
               self.__bool = True
+              print( "PROCESS HAS STOPPED, RESTARTING ..." )
               self.respawn()
             self.__respawn_lock.release()
             break
@@ -104,7 +91,11 @@ class Daemon:
   def on_stderr_line_read( self, line ):
     if len( line ):
       print( "stderr: {}".format(line) )
-      if any_of_words_in_line( self.__bad_words, line ):
+
+      (word, exist) = any_of_words_in_line( self.__bad_words, line )
+      if exist:
+        print( "BAD WORD FOUND: {} IN LINE: {}".format(word, line) )
+        print( "RESTARTING ..." )
         self.respawn()
   
   def on_stdout_line_read( self, line ):
@@ -116,6 +107,6 @@ class Daemon:
     self.kill()
     return Daemon( self.__cmd, self.__bad_words )
 
-
-bad_words = ["7", "12", "13"]
+cmd = get_path()
+bad_words = ["9", "12", "13"]
 Daemon( cmd, bad_words )
