@@ -31,7 +31,7 @@ class Process:
 
   def stderr_lines( self ):
     for line in iter( self.__process.stderr.readline, '' ):
-      yield line.decode(sys.stderr.encoding).strip()
+     yield line.decode(sys.stderr.encoding).strip()
 
   def stdout_lines( self ):
     for line in iter( self.__process.stdout.readline, '' ):
@@ -51,6 +51,9 @@ class Daemon:
   __worker2   = None
   __cmd       = cmd
   __bad_words = []
+
+  __respawn_lock = threading.Lock()
+  __bool         = False
 
   
   def __init__( self, cmd:str, bad_words:list ):
@@ -84,7 +87,14 @@ class Daemon:
     while self.__is_alive:
       try:
         for e in range:
-          if not self.__is_alive or not self.__process.is_alive():
+          if not self.__is_alive:
+            break
+          if not self.__process.is_alive():
+            self.__respawn_lock.acquire()
+            if not self.__bool:
+              self.__bool = True
+              self.respawn()
+            self.__respawn_lock.release()
             break
           callable( e )
       except e:
@@ -92,14 +102,19 @@ class Daemon:
 
 
   def on_stderr_line_read( self, line ):
-    print( "stderr: {}".format(line) )
-    if any_of_words_in_line( self.__bad_words, line ):
-      print( "KILLING..." )
-      self.kill()
-      Daemon( self.__cmd, self.__bad_words )
-
+    if len( line ):
+      print( "stderr: {}".format(line) )
+      if any_of_words_in_line( self.__bad_words, line ):
+        self.respawn()
+  
   def on_stdout_line_read( self, line ):
-    print( "stdout: {}".format(line) )
+    if len( line ):
+      print( "stdout: {}".format(line) )
+
+  def respawn(self):
+    print( "KILLING..." )
+    self.kill()
+    return Daemon( self.__cmd, self.__bad_words )
 
 
 bad_words = ["7", "12", "13"]
