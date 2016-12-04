@@ -4,6 +4,7 @@ import io
 import subprocess
 import threading
 import multiprocessing
+import atexit
 
 def get_path():
   if len( sys.argv ) > 1:
@@ -39,6 +40,9 @@ class Process:
   def is_alive( self ):
     return self.__process.poll() is None
 
+  def exit_code( self ):
+    return self.__process.poll()
+
 
 class Daemon:
   __is_alive  = False
@@ -51,11 +55,11 @@ class Daemon:
   __respawn_lock = threading.Lock()
   __bool         = False
 
-  
   def __init__( self, cmd:str, bad_words:list ):
     self.__cmd       = cmd
     self.__bad_words = bad_words
     self.spawn()
+    atexit.register(lambda: print("USER STOP"))
 
   def spawn( self ):
     self.__process = Process( cmd )
@@ -75,7 +79,7 @@ class Daemon:
         for e in range:
           if not self.__is_alive:
             break
-          if not self.__process.is_alive():
+          if not self.__process.is_alive() and self.__process.exit_code() is not 3221225786:
             self.__respawn_lock.acquire()
             if not self.__bool:
               self.__bool = True
@@ -86,7 +90,6 @@ class Daemon:
           callable( e )
       except e:
         print( "something bad was happen: {}".format(sys.exc_info()[0]) )
-
 
   def on_stderr_line_read( self, line ):
     if len( line ):
@@ -109,4 +112,7 @@ class Daemon:
 
 cmd = get_path()
 bad_words = ["9", "12", "13"]
+
+
 Daemon( cmd, bad_words )
+
