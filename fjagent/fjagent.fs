@@ -46,15 +46,17 @@ let create_task (cmd : string) (check_function : (string -> 'a option)) =
     proc.WaitForExit()
     proc.ExitCode
 
-[<EntryPoint>]
-let main argv = 
+let start_jdaemon (cmd : string) =
   let error_ids = 
     [ "22"
       "5"
       "7" ]
   let check_function (line : string) = error_ids |> Seq.tryFind line.Contains
+  Seq.initInfinite (fun _ -> create_task cmd check_function) |> Seq.iter (printfn "process exit code: %A\n")
+
+[<EntryPoint>]
+let main argv = 
   match argv with
-  | [| cmd |] ->
-    Seq.initInfinite (fun _ -> create_task cmd check_function) |> Seq.iter (printfn "process exit code: %A\n")
+  | [| cmd |] -> start_jdaemon cmd
   | otherwise -> ()
   0
