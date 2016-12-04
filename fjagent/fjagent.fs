@@ -51,11 +51,14 @@ module jdaemon =
 
   let start_jdaemon (cmd : string) =
     let error_ids = 
-      [ "22"
+      [ "2"
         "55"
         "7" ]
     let check_function (line : string) = error_ids |> Seq.tryFind line.Contains
-    Seq.initInfinite (fun _ -> create_task cmd check_function) |> Seq.iter (printfn "process exit code: %A\n")
+    let delay_time = 10;
+    let on_command_finished exit_code = printfn "process exit code: %A\nwaiting for %Asec\n" exit_code delay_time; Thread.Sleep (delay_time*1000)
+
+    Seq.initInfinite (fun _ -> create_task cmd check_function) |> Seq.iter on_command_finished
 
 
 let main argv = 
