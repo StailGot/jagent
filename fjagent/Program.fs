@@ -1,4 +1,6 @@
-﻿open System
+﻿//how to use fsprogram: http://fsharp.org/use/windows/
+
+open System
 open System.Threading
 open System.IO
 open System.Diagnostics
