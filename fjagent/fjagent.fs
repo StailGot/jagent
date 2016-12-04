@@ -48,10 +48,13 @@ let create_task (cmd : string) (check_function : (string -> 'a option)) =
 
 [<EntryPoint>]
 let main argv = 
-  let error_ids = [ "22"; "5"; "7" ]
+  let error_ids = 
+    [ "22"
+      "5"
+      "7" ]
   let check_function (line : string) = error_ids |> Seq.tryFind line.Contains
   match argv with
   | [| cmd |] ->
-    Seq.initInfinite (fun _ -> create_task cmd check_function) |> Seq.iter (printfn "Process exit code: %A\n")
+    Seq.initInfinite (fun _ -> create_task cmd check_function) |> Seq.iter (printfn "process exit code: %A\n")
   | otherwise -> ()
   0
