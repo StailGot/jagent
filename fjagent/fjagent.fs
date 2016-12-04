@@ -1,5 +1,6 @@
 ﻿//how to use fsprogram: http://fsharp.org/use/windows/
 
+open System
 
 module jdaemon =
   open System
@@ -51,14 +52,21 @@ module jdaemon =
   let start_jdaemon (cmd : string) =
     let error_ids = 
       [ "22"
-        "5"
+        "55"
         "7" ]
     let check_function (line : string) = error_ids |> Seq.tryFind line.Contains
     Seq.initInfinite (fun _ -> create_task cmd check_function) |> Seq.iter (printfn "process exit code: %A\n")
 
-[<EntryPoint>]
+
 let main argv = 
   match argv with
   | [| cmd |] -> jdaemon.start_jdaemon cmd
   | otherwise -> ()
   0
+
+#if INTERACTIVE
+fsi.CommandLineArgs |> Array.skip 1 |> main
+#else
+[<EntryPoint; STAThread>]
+let entryPoint args = main args
+#endif
